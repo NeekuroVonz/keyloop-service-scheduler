@@ -1,0 +1,13 @@
+node_modules
+dist
+coverage
+.git
+.env
+.env.local
+*.log
+dbeaver-mcp.log
+README.md
+docs
+test
+.vscode
+.idea

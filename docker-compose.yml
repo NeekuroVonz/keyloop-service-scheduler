@@ -1,0 +1,40 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: keyloop-scheduler-db
+    environment:
+      POSTGRES_USER: scheduler
+      POSTGRES_PASSWORD: scheduler
+      POSTGRES_DB: scheduler
+    ports:
+      - '5432:5432'
+    volumes:
+      - scheduler_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U scheduler -d scheduler']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: keyloop-scheduler-api
+    environment:
+      PORT: 3000
+      NODE_ENV: production
+      LOG_LEVEL: info
+      DATABASE_URL: postgresql://scheduler:scheduler@postgres:5432/scheduler?schema=public
+      BOOKING_MAX_RETRIES: 3
+      # Never auto-seed on API start — prevents wiping appointments on restart.
+      # Demo fixtures: docker compose run --rm -e RUN_SEED=true -e SEED_ONLY=true api
+      RUN_SEED: 'false'
+    ports:
+      - '3000:3000'
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  scheduler_pg_data:
